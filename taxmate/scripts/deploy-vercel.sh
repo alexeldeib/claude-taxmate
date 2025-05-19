@@ -22,7 +22,7 @@ vercel env add SUPABASE_SERVICE_ROLE_KEY production < <(echo "$SUPABASE_SERVICE_
 vercel env add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY production < <(echo "$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY")
 vercel env add STRIPE_SECRET_KEY production < <(echo "$STRIPE_SECRET_KEY")
 vercel env add STRIPE_WEBHOOK_SECRET production < <(echo "$STRIPE_WEBHOOK_SECRET")
-vercel env add NEXT_PUBLIC_APP_URL production < <(echo "https://taxmate.vercel.app")
+vercel env add NEXT_PUBLIC_APP_URL production < <(echo "$NEXT_PUBLIC_APP_URL")
 vercel env add FLY_WORKER_URL production < <(echo "$FLY_WORKER_URL")
 vercel env add OPENAI_API_KEY production < <(echo "$OPENAI_API_KEY")
 vercel env add RESEND_API_KEY production < <(echo "$RESEND_API_KEY")

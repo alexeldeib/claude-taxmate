@@ -24,8 +24,7 @@ flyctl launch --name taxmate-worker --region ord --no-deploy || true
 echo "Setting secrets..."
 flyctl secrets set \
   SUPABASE_URL="$SUPABASE_URL" \
-  SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
-  STORAGE_URL="$STORAGE_URL"
+  SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY"
 
 # Deploy
 echo "Deploying..."

@@ -36,7 +36,6 @@ type CategoryTotal struct {
 var (
 	supabaseURL = os.Getenv("SUPABASE_URL")
 	supabaseKey = os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
-	storageURL  = os.Getenv("STORAGE_URL")
 )
 
 func main() {
@@ -251,7 +250,7 @@ func formatCategory(category string) string {
 func uploadToStorage(data []byte, fileName string) (string, error) {
 	// In a real implementation, upload to Supabase Storage or S3
 	// For now, return a mock URL
-	return fmt.Sprintf("%s/storage/v1/object/public/forms/%s", storageURL, fileName), nil
+	return fmt.Sprintf("%s/storage/v1/object/public/forms/%s", supabaseURL, fileName), nil
 }
 
 func updateJobStatus(jobID, status, errorMessage string) {

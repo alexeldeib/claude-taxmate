@@ -78,6 +78,26 @@ export async function POST(request: NextRequest) {
         break
       }
 
+      case 'customer.subscription.created': {
+        const subscription = event.data.object
+        
+        // This event happens after checkout.session.completed
+        // We use it to ensure the subscription is properly recorded
+        console.log('Subscription created:', subscription.id)
+        
+        // Update the subscription status
+        await supabaseAdmin
+          .from('subscriptions')
+          .update({
+            status: subscription.status,
+            stripe_subscription_id: subscription.id,
+            ends_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
+          })
+          .eq('stripe_customer_id', subscription.customer as string)
+        
+        break
+      }
+
       case 'customer.subscription.updated': {
         const subscription = event.data.object
         
@@ -108,6 +128,8 @@ export async function POST(request: NextRequest) {
 
       default:
         console.log(`Unhandled event type: ${event.type}`)
+        // Log the event data for debugging new event types
+        console.log('Event data:', JSON.stringify(event.data.object, null, 2))
     }
 
     return NextResponse.json({ received: true })

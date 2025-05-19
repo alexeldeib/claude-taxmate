@@ -1,0 +1,59 @@
+
+> taxmate@0.1.0 build
+> next build
+
+   ▲ Next.js 15.3.2
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 0ms
+   Linting and checking validity of types ...
+   Collecting page data ...
+(node:49243) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:49244) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:49239) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:49242) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:49245) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+   Generating static pages (0/18) ...
+(node:49246) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+   Generating static pages (4/18) 
+   Generating static pages (8/18) 
+   Generating static pages (13/18) 
+ ✓ Generating static pages (18/18)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                      177 B         105 kB
+├ ○ /_not-found                            977 B         102 kB
+├ ƒ /api/auth/callback                     150 B         101 kB
+├ ƒ /api/categorize                        150 B         101 kB
+├ ƒ /api/forms/generate                    150 B         101 kB
+├ ƒ /api/forms/status/[jobId]              150 B         101 kB
+├ ƒ /api/stripe/create-checkout-session    150 B         101 kB
+├ ƒ /api/stripe/webhook                    150 B         101 kB
+├ ƒ /app                                 2.36 kB         110 kB
+├ ƒ /app/forms                           3.46 kB         157 kB
+├ ƒ /app/transactions                    3.92 kB         154 kB
+├ ○ /login                               1.69 kB         146 kB
+├ ○ /pricing                             4.58 kB         114 kB
+├ ○ /privacy                               177 B         105 kB
+├ ○ /signup                              1.71 kB         146 kB
+└ ○ /support                               177 B         105 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/4bd1b696-e8f934facbeb9ff8.js  53.2 kB
+  ├ chunks/684-054e9951f8526d8f.js       45.9 kB
+  └ other shared chunks (total)          1.96 kB
+
+
+ƒ Middleware                             65.4 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

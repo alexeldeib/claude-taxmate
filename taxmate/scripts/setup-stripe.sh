@@ -9,50 +9,72 @@ if ! command -v stripe &> /dev/null; then
     exit 1
 fi
 
-# Login to Stripe
-echo "Logging in to Stripe..."
-stripe login
-
 # Create products and prices
 echo "Creating products and prices..."
 
 # Create Solo plan
-SOLO_PRODUCT=$(stripe products create \
+echo "Creating Solo product..."
+SOLO_PRODUCT_RESULT=$(stripe products create \
   --name="TaxMate Solo" \
   --description="Monthly subscription for freelancers and solopreneurs" \
-  --active \
-  --format json | jq -r '.id')
+  --active)
 
-SOLO_PRICE=$(stripe prices create \
+SOLO_PRODUCT=$(echo "$SOLO_PRODUCT_RESULT" | grep -o '"id": "[^"]*' | grep -o 'prod_[^"]*' | head -1)
+echo "Solo product ID: $SOLO_PRODUCT"
+
+echo "Creating Solo price..."
+SOLO_PRICE_RESULT=$(stripe prices create \
   --product=$SOLO_PRODUCT \
-  --unit-amount=2000 \
   --currency=usd \
-  --recurring[interval]=month \
-  --format json | jq -r '.id')
+  --unit-amount=2000 \
+  --recurring.interval=month)
+
+SOLO_PRICE=$(echo "$SOLO_PRICE_RESULT" | grep -o '"id": "[^"]*' | grep -o 'price_[^"]*' | head -1)
+echo "Solo price ID: $SOLO_PRICE"
 
 # Create Seasonal plan
-SEASONAL_PRODUCT=$(stripe products create \
+echo "Creating Seasonal product..."
+SEASONAL_PRODUCT_RESULT=$(stripe products create \
   --name="TaxMate Seasonal" \
   --description="Annual subscription with advanced features" \
-  --active \
-  --format json | jq -r '.id')
+  --active)
 
-SEASONAL_PRICE=$(stripe prices create \
+SEASONAL_PRODUCT=$(echo "$SEASONAL_PRODUCT_RESULT" | grep -o '"id": "[^"]*' | grep -o 'prod_[^"]*' | head -1)
+echo "Seasonal product ID: $SEASONAL_PRODUCT"
+
+echo "Creating Seasonal price..."
+SEASONAL_PRICE_RESULT=$(stripe prices create \
   --product=$SEASONAL_PRODUCT \
-  --unit-amount=14900 \
   --currency=usd \
-  --recurring[interval]=year \
-  --format json | jq -r '.id')
+  --unit-amount=14900 \
+  --recurring.interval=year)
+
+SEASONAL_PRICE=$(echo "$SEASONAL_PRICE_RESULT" | grep -o '"id": "[^"]*' | grep -o 'price_[^"]*' | head -1)
+echo "Seasonal price ID: $SEASONAL_PRICE"
+
+# Update webhook endpoint URL to use actual domain
+APP_URL=${NEXT_PUBLIC_APP_URL:-"https://tax.acebutt.xyz"}
+WEBHOOK_URL="${APP_URL}/api/stripe/webhook"
 
 # Create webhook endpoint
-echo "Creating webhook endpoint..."
-WEBHOOK_ENDPOINT=$(stripe webhook_endpoints create \
-  --url="https://taxmate.vercel.app/api/stripe/webhook" \
-  --enabled-events=checkout.session.completed,customer.subscription.updated,customer.subscription.deleted \
-  --format json | jq -r '.id')
+echo "Creating webhook endpoint at $WEBHOOK_URL..."
+WEBHOOK_RESULT=$(stripe webhook_endpoints create \
+  --url="$WEBHOOK_URL" \
+  --enabled-events="checkout.session.completed" \
+  --enabled-events="customer.subscription.updated" \
+  --enabled-events="customer.subscription.deleted")
 
-WEBHOOK_SECRET=$(stripe webhook_endpoints retrieve $WEBHOOK_ENDPOINT \
-  --format json | jq -r '.secret')
+WEBHOOK_ENDPOINT=$(echo "$WEBHOOK_RESULT" | grep -o '"id": "[^"]*' | grep -o 'we_[^"]*' | head -1)
+echo "Webhook endpoint ID: $WEBHOOK_ENDPOINT"
+
+# Get webhook secret
+if [ ! -z "$WEBHOOK_ENDPOINT" ]; then
+    WEBHOOK_SECRET_RESULT=$(stripe webhook_endpoints retrieve $WEBHOOK_ENDPOINT)
+    WEBHOOK_SECRET=$(echo "$WEBHOOK_SECRET_RESULT" | grep -o '"secret": "[^"]*' | grep -o 'whsec_[^"]*' | head -1)
+else
+    echo "Failed to create webhook endpoint"
+    WEBHOOK_SECRET=""
+fi
 
 echo ""
 echo "Stripe setup complete!"
@@ -62,6 +84,4 @@ echo "NEXT_PUBLIC_STRIPE_SOLO_PRICE_ID=$SOLO_PRICE"
 echo "NEXT_PUBLIC_STRIPE_SEASONAL_PRICE_ID=$SEASONAL_PRICE"
 echo "STRIPE_WEBHOOK_SECRET=$WEBHOOK_SECRET"
 echo ""
-echo "Don't forget to add your Stripe API keys:"
-echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_..."
-echo "STRIPE_SECRET_KEY=sk_test_..."
+echo "Note: Make sure to update the webhook URL if your Vercel deployment URL is different."

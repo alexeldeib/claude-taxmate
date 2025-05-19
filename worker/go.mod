@@ -6,3 +6,5 @@ require (
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/supabase-community/supabase-go v0.0.1
 )
+
+require github.com/supabase/postgrest-go v0.0.7 // indirect

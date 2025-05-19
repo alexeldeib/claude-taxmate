@@ -87,15 +87,23 @@ func processFormGeneration(req FormRequest) {
 
 	// Fetch user transactions
 	var transactions []Transaction
-	err = client.From("transactions").
-		Select("*").
+	data, count, err := client.From("transactions").
+		Select("*", "exact", false).
 		Eq("user_id", req.UserID).
-		Execute(&transactions)
+		Execute()
 	if err != nil {
 		log.Printf("Failed to fetch transactions: %v", err)
 		updateJobStatus(req.JobID, "error", "Failed to fetch transactions")
 		return
 	}
+	
+	if err := json.Unmarshal(data, &transactions); err != nil {
+		log.Printf("Failed to unmarshal transactions: %v", err)
+		updateJobStatus(req.JobID, "error", "Failed to parse transactions")
+		return
+	}
+	
+	_ = count // Not used but returned by API
 
 	// Generate the form based on type
 	var pdfBytes []byte
@@ -161,7 +169,7 @@ func generateScheduleC(transactions []Transaction) ([]byte, error) {
 	pdf.Ln(10)
 	pdf.SetFont("Arial", "", 12)
 
-	y := pdf.GetY()
+	// y := pdf.GetY() // commented out - unused variable
 	lineHeight := 7.0
 	totalExpenses := 0.0
 
@@ -268,13 +276,15 @@ func updateJobStatus(jobID, status, errorMessage string) {
 		update["error_message"] = errorMessage
 	}
 
-	err = client.From("form_jobs").
-		Update(update).
+	data, count, err := client.From("form_jobs").
+		Update(update, "", "").
 		Eq("id", jobID).
-		Execute(nil)
+		Execute()
 	if err != nil {
 		log.Printf("Failed to update job status: %v", err)
 	}
+	_ = data // Not used but returned by API
+	_ = count // Not used but returned by API
 }
 
 func updateJobStatusWithURL(jobID, status, resultURL string) {
@@ -290,11 +300,13 @@ func updateJobStatusWithURL(jobID, status, resultURL string) {
 		"updated_at": time.Now(),
 	}
 
-	err = client.From("form_jobs").
-		Update(update).
+	data, count, err := client.From("form_jobs").
+		Update(update, "", "").
 		Eq("id", jobID).
-		Execute(nil)
+		Execute()
 	if err != nil {
 		log.Printf("Failed to update job status: %v", err)
 	}
+	_ = data // Not used but returned by API
+	_ = count // Not used but returned by API
 }

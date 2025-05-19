@@ -13,12 +13,23 @@ fi
 
 # Load environment variables
 if [ -f ../.env.worker ]; then
-  export $(cat ../.env.worker | xargs)
+  export $(cat ../.env.worker | grep -v '^#' | xargs)
 fi
 
-# Create app if it doesn't exist
-echo "Creating Fly app..."
-flyctl launch --name taxmate-worker --region ord --no-deploy || true
+# Check if we're logged in
+if ! flyctl auth whoami > /dev/null 2>&1; then
+    echo "Not logged in to Fly.io. Running 'flyctl auth login'..."
+    flyctl auth login
+fi
+
+# Check if app exists
+if flyctl apps list | grep -q "taxmate-worker"; then
+    echo "App taxmate-worker already exists"
+else
+    # Create app if it doesn't exist
+    echo "Creating Fly app..."
+    flyctl launch --name taxmate-worker --region ord --no-deploy
+fi
 
 # Set secrets
 echo "Setting secrets..."

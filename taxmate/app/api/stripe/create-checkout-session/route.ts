@@ -6,6 +6,10 @@ import { config } from '@/lib/config'
 export async function POST(request: NextRequest) {
   try {
     const { priceId, planType } = await request.json()
+    
+    // Debug logging
+    console.log('Checkout session request:', { priceId, planType })
+    console.log('Config app URL:', config.app.url)
 
     // Verify user is authenticated
     const supabase = await createClient()
@@ -69,8 +73,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ sessionId: session.id })
   } catch (error) {
     console.error('Error creating checkout session:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { 
+        error: 'Failed to create checkout session',
+        details: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined 
+      },
       { status: 500 }
     )
   }

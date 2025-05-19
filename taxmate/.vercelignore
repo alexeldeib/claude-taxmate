@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Testing
+__tests__/
+*.test.ts
+*.test.tsx
+
+# Misc
+.DS_Store
+*.local
+.env*.local
+
+# Documentation
+README.md
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Scripts
+scripts/

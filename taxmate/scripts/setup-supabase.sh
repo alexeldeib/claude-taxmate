@@ -9,26 +9,42 @@ if ! command -v supabase &> /dev/null; then
     brew install supabase/tap/supabase
 fi
 
-# Initialize Supabase (if not already initialized)
-echo "Initializing Supabase..."
-supabase init || true
+# Load environment variables
+if [ -f .env.local ]; then
+    export $(cat .env.local | grep -v '^#' | xargs)
+fi
 
-# Start Supabase locally
-echo "Starting Supabase locally..."
-supabase start
+# Check if we have required env vars
+if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+    echo "Error: Missing required environment variables."
+    echo "Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local"
+    exit 1
+fi
 
-# Apply migrations
+# Extract project ID from Supabase URL
+PROJECT_ID=$(echo $NEXT_PUBLIC_SUPABASE_URL | sed -E 's|https://([^.]+)\.supabase\.co.*|\1|')
+echo "Using Supabase project: $PROJECT_ID"
+
+# Link to the remote project
+echo "Linking to Supabase project..."
+supabase link --project-ref $PROJECT_ID
+
+# Push migrations to production (will prompt for password)
 echo "Applying database migrations..."
+echo ""
+echo "NOTE: You will be prompted for your database password."
+echo "Find this in your Supabase dashboard under Settings > Database"
+echo ""
 supabase db push
 
-# Get local credentials
 echo ""
-echo "Local Supabase credentials:"
-supabase status
-
+echo "Supabase setup complete!"
 echo ""
-echo "To create a production project:"
-echo "1. Go to https://app.supabase.com"
-echo "2. Create a new project"
-echo "3. Run the migrations: supabase db push --db-url YOUR_DATABASE_URL"
-echo "4. Copy the API keys to your .env.local file"
+echo "Production database migrations have been applied."
+echo ""
+echo "Storage buckets will be created automatically when forms are generated."
+echo ""
+echo "Make sure your .env.local contains:"
+echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL"
+echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=<your anon key>"
+echo "SUPABASE_SERVICE_ROLE_KEY=<your service role key>"

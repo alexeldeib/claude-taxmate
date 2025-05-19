@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { config } from '@/lib/config'
 
-const openai = new OpenAI({
+// Initialize OpenAI only if API key is available
+const openai = config.external.openaiApiKey ? new OpenAI({
   apiKey: config.external.openaiApiKey,
-})
+}) : null
 
 const CATEGORIES = [
   'meals',
@@ -21,6 +22,11 @@ const CATEGORIES = [
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if OpenAI is configured
+    if (!openai) {
+      return NextResponse.json({ error: 'OpenAI not configured' }, { status: 503 })
+    }
+
     const { transactions } = await request.json()
 
     // Verify user is authenticated

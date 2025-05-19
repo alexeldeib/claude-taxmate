@@ -1,15 +1,11 @@
 import Stripe from 'stripe'
 import { config } from './config'
 
-// Validate Stripe key is present
-if (!config.stripe.secretKey) {
-  throw new Error('Stripe secret key is not configured')
-}
-
-export const stripe = new Stripe(config.stripe.secretKey, {
+// Initialize Stripe only if key is available
+export const stripe = config.stripe.secretKey ? new Stripe(config.stripe.secretKey, {
   apiVersion: '2025-04-30.basil',
   typescript: true,
-})
+}) : null
 
 export const STRIPE_PRICES = {
   solo: process.env.NEXT_PUBLIC_STRIPE_SOLO_PRICE_ID || 'price_solo',

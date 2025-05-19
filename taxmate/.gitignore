@@ -59,3 +59,4 @@ supabase/.env
 supabase/secrets.*
 supabase/.temp
 .supabase
+.env*.local

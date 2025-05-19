@@ -16,8 +16,19 @@ export default async function FormsPage() {
     .from('subscriptions')
     .select('*')
     .eq('user_id', user.id)
-    .eq('status', 'active')
     .single()
+    
+  // Log subscription data for debugging
+  console.log('User subscription:', {
+    userId: user.id,
+    subscription,
+    status: subscription?.status,
+    plan: subscription?.plan,
+  })
+  
+  const hasActiveSubscription = subscription && 
+    subscription.status === 'active' &&
+    (subscription.plan === 'solo' || subscription.plan === 'seasonal')
 
   const { data: formJobs } = await supabase
     .from('form_jobs')
@@ -34,7 +45,7 @@ export default async function FormsPage() {
     <FormsContent 
       user={user}
       formJobs={formJobs || []}
-      hasActiveSubscription={!!subscription}
+      hasActiveSubscription={hasActiveSubscription}
       transactionCount={transactions?.length || 0}
     />
   )

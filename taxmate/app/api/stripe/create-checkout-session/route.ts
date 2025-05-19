@@ -5,6 +5,11 @@ import { config } from '@/lib/config'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
+    }
+    
     const { priceId, planType } = await request.json()
     
     // Debug logging

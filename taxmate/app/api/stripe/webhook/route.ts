@@ -4,13 +4,25 @@ import { stripe } from '@/lib/stripe'
 import { config } from '@/lib/config'
 import { supabaseAdmin } from '@/lib/supabase/service'
 
+// Disable body parsing, we need the raw body
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
-  const body = await request.text()
+  // Get the raw body as a buffer to ensure it's the exact same as what Stripe sent
+  const buffer = await request.arrayBuffer()
+  const body = Buffer.from(buffer).toString('utf-8')
+  
   const headersList = await headers()
   const signature = headersList.get('stripe-signature')
 
   if (!signature) {
+    console.error('Webhook error: Missing stripe-signature header')
     return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
+  }
+
+  if (!config.stripe.webhookSecret) {
+    console.error('Webhook error: Missing webhook secret configuration')
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
   }
 
   let event
@@ -22,30 +34,47 @@ export async function POST(request: NextRequest) {
       config.stripe.webhookSecret
     )
   } catch (err) {
-    console.error('Webhook signature verification failed:', err)
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    console.error('Webhook signature verification failed:', {
+      error: err instanceof Error ? err.message : err,
+      signatureHeader: signature,
+      webhookSecretLength: config.stripe.webhookSecret?.length,
+      bodyLength: body.length,
+    })
+    return NextResponse.json({ 
+      error: 'Invalid signature',
+      details: err instanceof Error ? err.message : 'Unknown error'
+    }, { status: 400 })
   }
 
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object
-        const metadata = session.metadata as { plan_type: string } | null
+        const metadata = session.metadata as { 
+          user_id: string
+          plan_type: string 
+        } | null
+        
+        if (!metadata?.user_id) {
+          console.error('Missing user_id in session metadata')
+          break
+        }
         
         // Update subscription in database
-        await supabaseAdmin
+        const result = await supabaseAdmin
           .from('subscriptions')
           .update({
             stripe_subscription_id: session.subscription as string,
-            plan: metadata?.plan_type || 'solo',
+            plan: metadata.plan_type || 'solo',
             status: 'active',
             started_at: new Date().toISOString(),
-            ends_at: metadata?.plan_type === 'seasonal' 
+            ends_at: metadata.plan_type === 'seasonal' 
               ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
               : null,
           })
-          .eq('stripe_customer_id', session.customer as string)
-        
+          .eq('user_id', metadata.user_id)
+          
+        console.log('Subscription updated:', { user_id: metadata.user_id, result })
         break
       }
 

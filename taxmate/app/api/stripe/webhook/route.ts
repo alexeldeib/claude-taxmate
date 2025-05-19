@@ -77,10 +77,11 @@ export async function POST(request: NextRequest) {
           break
         }
         
-        // Update subscription in database
+        // Upsert subscription in database (use upsert to handle case where record doesn't exist)
         const { data: result, error } = await supabaseAdmin
           .from('subscriptions')
-          .update({
+          .upsert({
+            user_id: metadata.user_id,
             stripe_subscription_id: session.subscription as string,
             stripe_customer_id: session.customer as string,
             plan: metadata.plan_type || 'solo',
@@ -90,7 +91,6 @@ export async function POST(request: NextRequest) {
               ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
               : null,
           })
-          .eq('user_id', metadata.user_id)
           
         console.log('Subscription updated:', { 
           user_id: metadata.user_id, 
@@ -112,30 +112,47 @@ export async function POST(request: NextRequest) {
           metadata: subscription.metadata,
         })
         
-        // Find the subscription by stripe_customer_id
-        const { data: existingSub, error: findError } = await supabaseAdmin
-          .from('subscriptions')
-          .select('*')
-          .eq('stripe_customer_id', subscription.customer as string)
-          .single()
-          
-        if (findError) {
-          console.error('Error finding subscription:', findError)
+        // Extract metadata if available
+        const metadata = subscription.metadata as { 
+          user_id?: string
+          plan_type?: string 
+        } | null
+        
+        // If we have metadata with user_id, use upsert to handle the case where record doesn't exist
+        if (metadata?.user_id) {
+          const { data: upsertResult, error: upsertError } = await supabaseAdmin
+            .from('subscriptions')
+            .upsert({
+              user_id: metadata.user_id,
+              stripe_customer_id: subscription.customer as string,
+              stripe_subscription_id: subscription.id,
+              plan: metadata.plan_type || 'solo',
+              status: subscription.status,
+              started_at: new Date().toISOString(),
+              ends_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
+            })
+            
+          console.log('Upsert result:', { upsertResult, upsertError })
+        } else {
+          // If no metadata, try to update existing record by stripe_customer_id
+          const { data: updateResult, error: updateError } = await supabaseAdmin
+            .from('subscriptions')
+            .update({
+              status: subscription.status,
+              stripe_subscription_id: subscription.id,
+              ends_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
+            })
+            .eq('stripe_customer_id', subscription.customer as string)
+            
+          if (updateError?.code === 'PGRST116') {
+            console.error('No subscription found for customer:', subscription.customer)
+            console.log('This likely means the checkout.session.completed event hasn\'t been processed yet')
+          } else if (updateError) {
+            console.error('Error updating subscription:', updateError)
+          } else {
+            console.log('Update result:', { updateResult, updateError })
+          }
         }
-        
-        console.log('Found subscription:', existingSub)
-        
-        // Update the subscription status
-        const { data: updateResult, error: updateError } = await supabaseAdmin
-          .from('subscriptions')
-          .update({
-            status: subscription.status,
-            stripe_subscription_id: subscription.id,
-            ends_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
-          })
-          .eq('stripe_customer_id', subscription.customer as string)
-          
-        console.log('Update result:', { updateResult, updateError })
         
         break
       }
@@ -143,13 +160,21 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.updated': {
         const subscription = event.data.object
         
-        await supabaseAdmin
+        const { data, error } = await supabaseAdmin
           .from('subscriptions')
           .update({
             status: subscription.status,
             ends_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
           })
           .eq('stripe_subscription_id', subscription.id)
+          
+        if (error?.code === 'PGRST116') {
+          console.error('No subscription found for update:', subscription.id)
+        } else if (error) {
+          console.error('Error updating subscription:', error)
+        } else {
+          console.log('Subscription updated:', subscription.id)
+        }
         
         break
       }
@@ -157,13 +182,21 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object
         
-        await supabaseAdmin
+        const { data, error } = await supabaseAdmin
           .from('subscriptions')
           .update({
             status: 'cancelled',
             ends_at: new Date().toISOString(),
           })
           .eq('stripe_subscription_id', subscription.id)
+          
+        if (error?.code === 'PGRST116') {
+          console.error('No subscription found for deletion:', subscription.id)
+        } else if (error) {
+          console.error('Error deleting subscription:', error)
+        } else {
+          console.log('Subscription cancelled:', subscription.id)
+        }
         
         break
       }

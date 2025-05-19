@@ -1,0 +1,8 @@
+github.com/go-pdf/fpdf v0.9.0 h1:fiKdPk9HGpssb5YQTJWyAoHzHQrPBpGq6w+IJ17RoKs=
+github.com/go-pdf/fpdf v0.9.0/go.mod h1:T51YSGKsHNzM0cJFBOOqV+J+1z7xDTGMJC/YL5BCaAs=
+github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
+github.com/google/go-querystring v1.1.0/go.mod h1:Kcdr2DB4koayq7X8pmAG4sNG59So17icRSOU623lUBU=
+github.com/nedpals/supabase-go v0.3.0 h1:qeLOiW758NZb/eC1SKmUuH/83pELDJpwJyI7z+LANFY=
+github.com/nedpals/supabase-go v0.3.0/go.mod h1:rscvF0tYsD6gJYKMYZy8e6YWspVIaGnBb13PlU6HFcU=
+github.com/supabase-community/supabase-go v0.0.1 h1:E3QgNASSgFKjNXC4bA/mf5MIDCyQd0O8DYTC5PlYcmo=
+github.com/supabase-community/supabase-go v0.0.1/go.mod h1:i+I30dYCc+pPGlGfquBNDw5LxDKZzx0FWu6+lLzZEG8=

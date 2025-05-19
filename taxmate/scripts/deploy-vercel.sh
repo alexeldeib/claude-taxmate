@@ -23,7 +23,8 @@ if [ -f .env.local ]; then
     if [[ ! -z "$key" && ! "$key" =~ ^# ]]; then
       # Trim whitespace and export the variable
       key=$(echo "$key" | xargs)
-      value=$(echo "$value" | xargs)
+      # Remove trailing newlines and whitespace from value
+      value=$(echo "$value" | sed 's/[[:space:]]*$//')
       export "$key=$value"
     fi
   done < .env.local

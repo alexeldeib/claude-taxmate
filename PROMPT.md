@@ -10,7 +10,7 @@ Build a full production-ready SaaS application called **TaxMate** – an AI-powe
 - **Hosting**: Vercel
 - **Auth**: Supabase Auth (magic link)
 - **Database**: Supabase Postgres
-- **Billing**: Stripe Checkout
+- **Billing**: Stripe Checkout (with configured API version)
 - **Async Jobs**: Fly.io worker for long-running form generation
 - **Short tasks**: Supabase Edge Functions
 
@@ -69,11 +69,11 @@ Store subscription info in Supabase `subscriptions` table and enforce access con
 
 - Exposes POST `/generate-form` endpoint (accepts user_id + form type)
 - Connects to Supabase, fetches transaction data
-- Generates PDF forms and uploads to S3 or Supabase Storage
+- Generates PDF forms and uploads to **Supabase Storage** (do not use AWS S3)
 - Writes back `result_url` and job status
 - Polling from frontend via job ID
 - Use a centralized configuration system for all env/secrets (e.g., `config.ts`, `config.go`)
-- Enforce presence of required environment variables at startup
+- Enforce presence of required environment variables at startup, including `STRIPE_API_VERSION`
 - Always add secrets, `.env`, and configuration files to `.gitignore`
 - Always commit and push changes to version control (e.g., GitHub) after each functional unit is completed
 
@@ -130,7 +130,7 @@ Store subscription info in Supabase `subscriptions` table and enforce access con
 
 ## 🚀 Deployment Scripts
 
-The agent may create deploy scripts and attempt deployments (e.g., Fly.io, Vercel, Supabase), but must always validate required parameters. Configuration should always be sourced from `.env` or centralized config files.
+The agent may create deploy scripts and attempt deployments (e.g., Fly.io, Vercel, Supabase), but must always validate required parameters. Configuration should always be sourced from `.env` or centralized config files, including the **Stripe API version**.
 
 ### 1. Supabase
 
@@ -168,6 +168,7 @@ vercel env add SUPABASE_URL
 vercel env add SUPABASE_ANON_KEY
 vercel env add STRIPE_PUBLISHABLE_KEY
 vercel env add STRIPE_SECRET_KEY
+vercel env add STRIPE_API_VERSION
 
 # Deploy
 vercel --prod
@@ -198,3 +199,5 @@ config.js
 - Centralize environment variable definitions and fail-fast on missing configuration
 - Always commit and push working functionality to version control incrementally
 - Validate required parameters before executing deploys or scripts; source them from `.env` or config files
+- Include `STRIPE_API_VERSION` as part of the central configuration system
+- All generated files (e.g. PDFs) must be stored in **Supabase Storage**, not AWS S3
